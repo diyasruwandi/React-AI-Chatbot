@@ -1,35 +1,52 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+ import { GoogleGenerativeAI } from "@google/generative-ai";
+import { useState } from "react";
+import Chatbotinterface from "./components/chatbotinterface";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [isLoading, setIsLoading] = useState(false);
+  const [promptInputValue, setPromptInputValue] = useState('');
+  const [chatResponses, setChatResponses] = useState([]);
+
+  const genAI = new GoogleGenerativeAI(
+    import.meta.env.VITE_GOOGLE_GEMINI_API_KEY,
+  );
+
+  const getGeminiAIResponse = async () => {
+    try {
+      setIsLoading(true)
+
+      const model = genAI.getGenerativeModel({model: 
+        'gemini-pro'}) //menginisialisasi memakai gemini pro
+
+        const result = await model.generateContent(promptInputValue) // await diisini artinya nunggu hasilnya dan ga menjalankan kode yang ada dibawahnya dulu
+        const response = result.response
+        const responseText = response.text()
+
+        setChatResponses([
+          ...chatResponses,
+          { type: 'user', message: promptInputValue }, //
+          { type: 'bot', message: responseText }, //response dari bot ketika user memberi chat
+        ])
+
+      setIsLoading(false)
+    } catch (error) {
+      console.log(error)
+      setIsLoading(false)
+      
+    }
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div className="w-screen h-screen bg-gray-500  flex justify-center">
+      <Chatbotinterface 
+              promptInputValue={promptInputValue}
+              setPromptInputValue={setPromptInputValue}
+              chatResponses={chatResponses}
+              setChatResponses={setChatResponses}
+              isLoading={isLoading}
+              action={getGeminiAIResponse}/>
+    </div>
+  );
 }
 
-export default App
+export default App;
